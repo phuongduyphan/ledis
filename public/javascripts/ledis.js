@@ -14,7 +14,8 @@ class Ledis {
 
   // String
   set(key, value) {
-    if (!this.ledisMap.hasOwnProperty(key) || this.ledisMap[key] instanceof Object) {
+    if (!Object.prototype.hasOwnProperty.call(this.ledisMap, key)
+      || this.ledisMap[key] instanceof Object) {
       this.ledisMap[key] = value;
       return Ledis.constructReturnedObject(null, Ledis.message.OK, Ledis.messageType.SUCCESS);
     }
@@ -23,7 +24,7 @@ class Ledis {
   }
 
   get(key) {
-    if (this.ledisMap.hasOwnProperty(key)) {
+    if (Object.prototype.hasOwnProperty.call(this.ledisMap, key)) {
       return Ledis.constructReturnedObject(this.ledisMap[key],
         Ledis.message.OK, Ledis.messageType.SUCCESS);
     }
@@ -32,7 +33,8 @@ class Ledis {
 
   // Set
   sadd(key, ...values) {
-    if (!this.ledisMap.hasOwnProperty(key) || this.ledisMap[key] instanceof Set) {
+    if (!Object.prototype.hasOwnProperty.call(this.ledisMap, key)
+      || this.ledisMap[key] instanceof Set) {
       const set = this.ledisMap[key] instanceof Set ? this.ledisMap[key] : new Set();
 
       let countAddedElement = 0;
@@ -53,7 +55,7 @@ class Ledis {
   }
 
   srem(key, ...values) {
-    if (this.ledisMap.hasOwnProperty(key)) {
+    if (Object.prototype.hasOwnProperty.call(this.ledisMap, key)) {
       if (this.ledisMap[key] instanceof Set) {
         let countRemoveElements = 0;
         values.forEach((value) => {
@@ -70,8 +72,9 @@ class Ledis {
   }
 
   smembers(key) {
-    if (!this.ledisMap.hasOwnProperty(key) || ((this.ledisMap[key] instanceof Set)
-      && this.ledisMap[key].size === 0)) {
+    if (!Object.prototype.hasOwnProperty.call(this.ledisMap, key)
+      || ((this.ledisMap[key] instanceof Set)
+        && this.ledisMap[key].size === 0)) {
       return Ledis.constructReturnedObject(null, Ledis.message.EMPTY_LIST_SET,
         Ledis.messageType.SUCCESS);
     }
@@ -87,14 +90,15 @@ class Ledis {
 
   sinter(...keys) {
     for (const key of keys) {
-      if (!(this.ledisMap[key] instanceof Set) && this.ledisMap.hasOwnProperty(key)) {
+      if (!(this.ledisMap[key] instanceof Set)
+        && Object.prototype.hasOwnProperty.call(this.ledisMap, key)) {
         return Ledis.constructReturnedObject(null, Ledis.message.WRONG_TYPE,
           Ledis.messageType.ERROR);
       }
     }
 
     for (const key of keys) {
-      if (!this.ledisMap.hasOwnProperty(key)) {
+      if (!Object.prototype.hasOwnProperty.call(this.ledisMap, key)) {
         return Ledis.constructReturnedObject(null, Ledis.message.EMPTY_LIST_SET,
           Ledis.messageType.SUCCESS);
       }
@@ -135,7 +139,7 @@ class Ledis {
   }
 
   del(key) {
-    if (this.ledisMap.hasOwnProperty(key)) {
+    if (Object.prototype.hasOwnProperty.call(this.ledisMap, key)) {
       delete this.ledisMap[key];
       return Ledis.constructReturnedObject(1, Ledis.message.OK, Ledis.messageType.SUCCESS);
     }
@@ -148,7 +152,7 @@ class Ledis {
         Ledis.messageType.ERROR);
     }
 
-    if (!this.ledisMap.hasOwnProperty(key)) {
+    if (!Object.prototype.hasOwnProperty.call(this.ledisMap, key)) {
       return Ledis.constructReturnedObject(0, Ledis.message.OK, Ledis.messageType.SUCCESS);
     }
 
@@ -166,15 +170,58 @@ class Ledis {
   }
 
   ttl(key) {
-    if (this.timeOutManager.hasOwnProperty(key)) {
+    if (Object.prototype.hasOwnProperty.call(this.timeOutManager, key)) {
       const elapsed = Date.now() - this.timeOutManager[key].start;
       const remaining = Math.round((this.timeOutManager[key].duration - elapsed) / 1000);
       return Ledis.constructReturnedObject(remaining, Ledis.message.OK, Ledis.messageType.SUCCESS);
     }
-    if (this.ledisMap.hasOwnProperty(key)) {
+    if (Object.prototype.hasOwnProperty.call(this.ledisMap, key)) {
       return Ledis.constructReturnedObject(-1, Ledis.message.OK, Ledis.messageType.SUCCESS);
     }
     return Ledis.constructReturnedObject(-2, Ledis.message.OK, Ledis.messageType.SUCCESS);
+  }
+
+  // Snapshot
+  static setToJSONReplacer(key, value) {
+    if (typeof value === 'object' && value instanceof Set) {
+      return {
+        type: 'Set',
+        data: [...value],
+      };
+    }
+    return value;
+  }
+
+  save() {
+    const snapshots = JSON.parse(localStorage.getItem('snapshots')) || [];
+
+    const id = `snapshots-${Date.now()}`;
+    snapshots.push(id);
+    localStorage.setItem('snapshots', JSON.stringify(snapshots));
+    localStorage.setItem(id, JSON.stringify(this.ledisMap, Ledis.setToJSONReplacer));
+    return Ledis.constructReturnedObject(null, Ledis.message.OK, Ledis.messageType.SUCCESS);
+  }
+
+  static JSONToSetReviver(key, value) {
+    if (typeof value === 'object' && Object.prototype.hasOwnProperty.call(value, 'type')
+      && value.type === 'Set') {
+      return new Set(value.data);
+    }
+    return value;
+  }
+
+  restore() {
+    const snapshots = JSON.parse(localStorage.getItem('snapshots')) || [];
+
+    if (snapshots.length === 0) {
+      return Ledis.constructReturnedObject(null, Ledis.message.NO_SNAPSHOT,
+        Ledis.messageType.ERROR);
+    }
+
+    const ledisState = JSON.parse(localStorage.getItem(snapshots[snapshots.length - 1]),
+      Ledis.JSONToSetReviver);
+    this.ledisMap = ledisState;
+    return Ledis.constructReturnedObject(null, Ledis.message.OK, Ledis.messageType.SUCCESS);
   }
 }
 
@@ -183,6 +230,7 @@ Ledis.message = {
   WRONG_TYPE: 'Operation against a key holding the wrong kind of value',
   EMPTY_LIST_SET: 'empty list or set',
   NEGATIVE_SECOND: 'seconds must be a positive integer',
+  NO_SNAPSHOT: 'No snapshot available',
 };
 
 Ledis.messageType = {
