@@ -12,10 +12,134 @@ class Ledis {
     };
   }
 
+  // handle input
+  static splitInput(inputString) {
+    if (!inputString) return null;
+
+    const inputArr = inputString.trim().split(/\s+/);
+    if (inputArr.length !== 0) {
+      inputArr[0] = inputArr[0].toLowerCase();
+    }
+    return {
+      command: inputArr[0],
+      args: inputArr.length > 1 ? inputArr.slice(1) : [],
+    };
+  }
+
+  handleInput(inputString) {
+    const { command, args } = Ledis.splitInput(inputString);
+
+    let response;
+    switch (command) {
+      case 'set':
+        if (args.length !== 2) {
+          response = Ledis.constructReturnedObject(null, Ledis.message.WRONG_ARGUMENTS,
+            Ledis.messageType.ERROR);
+          break;
+        }
+        response = this.set(args[0], args[1]);
+        break;
+
+      case 'get':
+        if (args.length !== 1) {
+          response = Ledis.constructReturnedObject(null, Ledis.message.WRONG_ARGUMENTS,
+            Ledis.messageType.ERROR);
+          break;
+        }
+        response = this.get(args[0]);
+        break;
+
+      case 'sadd':
+        if (args.length < 2) {
+          response = Ledis.constructReturnedObject(null, Ledis.message.WRONG_ARGUMENTS,
+            Ledis.messageType.ERROR);
+          break;
+        }
+        response = this.sadd(args[0], ...args.slice(1));
+        break;
+
+      case 'srem':
+        if (args.length < 2) {
+          response = Ledis.constructReturnedObject(null, Ledis.message.WRONG_ARGUMENTS,
+            Ledis.messageType.ERROR);
+          break;
+        }
+        response = this.srem(args[0], ...args.slice(1));
+        break;
+
+      case 'smembers':
+        if (args.length !== 1) {
+          response = Ledis.constructReturnedObject(null, Ledis.message.WRONG_ARGUMENTS,
+            Ledis.messageType.ERROR);
+          break;
+        }
+        response = this.smembers(args[0]);
+        break;
+
+      case 'sinter':
+        if (args.length < 1) {
+          response = Ledis.constructReturnedObject(null, Ledis.message.WRONG_ARGUMENTS,
+            Ledis.messageType.ERROR);
+          break;
+        }
+        response = this.sinter(...args);
+        break;
+
+      case 'keys':
+        response = this.keys();
+        break;
+
+      case 'del':
+        if (args.length !== 1) {
+          response = Ledis.constructReturnedObject(null, Ledis.message.WRONG_ARGUMENTS,
+            Ledis.messageType.ERROR);
+          break;
+        }
+        response = this.del(args[0]);
+        break;
+
+      case 'expire':
+        if (args.length !== 2) {
+          response = Ledis.constructReturnedObject(null, Ledis.message.WRONG_ARGUMENTS,
+            Ledis.messageType.ERROR);
+          break;
+        }
+        response = this.expire(args[0], args[1]);
+        break;
+
+      case 'ttl':
+        if (args.length !== 1) {
+          response = Ledis.constructReturnedObject(null, Ledis.message.WRONG_ARGUMENTS,
+            Ledis.messageType.ERROR);
+          break;
+        }
+        response = this.ttl(args[0]);
+        break;
+
+      case 'save':
+        response = this.save();
+        break;
+
+      case 'restore':
+        response = this.restore();
+        break;
+
+      default:
+        response = Ledis.constructReturnedObject(null, Ledis.message.WRONG_COMMAND,
+          Ledis.messageType.ERROR);
+    }
+    return response;
+  }
+
   // String
   set(key, value) {
+    if (arguments.length !== 2) {
+      return Ledis.constructReturnedObject(null, Ledis.message.WRONG_ARGUMENTS,
+        Ledis.messageType.ERROR);
+    }
+
     if (!Object.prototype.hasOwnProperty.call(this.ledisMap, key)
-      || this.ledisMap[key] instanceof Object) {
+      || typeof this.ledisMap[key] === 'string') {
       this.ledisMap[key] = value;
       return Ledis.constructReturnedObject(null, Ledis.message.OK, Ledis.messageType.SUCCESS);
     }
@@ -24,15 +148,29 @@ class Ledis {
   }
 
   get(key) {
-    if (Object.prototype.hasOwnProperty.call(this.ledisMap, key)) {
-      return Ledis.constructReturnedObject(this.ledisMap[key],
-        Ledis.message.OK, Ledis.messageType.SUCCESS);
+    if (arguments.length !== 1) {
+      return Ledis.constructReturnedObject(null, Ledis.message.WRONG_ARGUMENTS,
+        Ledis.messageType.ERROR);
     }
-    return Ledis.constructReturnedObject(null, Ledis.message.OK, Ledis.messageType.SUCCESS);
+
+    if (Object.prototype.hasOwnProperty.call(this.ledisMap, key)) {
+      if (typeof this.ledisMap[key] === 'string') {
+        return Ledis.constructReturnedObject(this.ledisMap[key],
+          Ledis.message.OK, Ledis.messageType.SUCCESS);
+      }
+      return Ledis.constructReturnedObject(null, Ledis.message.WRONG_TYPE,
+        Ledis.messageType.ERROR);
+    }
+    return Ledis.constructReturnedObject('nil', Ledis.message.OK, Ledis.messageType.SUCCESS);
   }
 
   // Set
   sadd(key, ...values) {
+    if (arguments.length < 2) {
+      return Ledis.constructReturnedObject(null, Ledis.message.WRONG_ARGUMENTS,
+        Ledis.messageType.ERROR);
+    }
+
     if (!Object.prototype.hasOwnProperty.call(this.ledisMap, key)
       || this.ledisMap[key] instanceof Set) {
       const set = this.ledisMap[key] instanceof Set ? this.ledisMap[key] : new Set();
@@ -55,6 +193,11 @@ class Ledis {
   }
 
   srem(key, ...values) {
+    if (arguments.length < 2) {
+      return Ledis.constructReturnedObject(null, Ledis.message.WRONG_ARGUMENTS,
+        Ledis.messageType.ERROR);
+    }
+
     if (Object.prototype.hasOwnProperty.call(this.ledisMap, key)) {
       if (this.ledisMap[key] instanceof Set) {
         let countRemoveElements = 0;
@@ -72,6 +215,11 @@ class Ledis {
   }
 
   smembers(key) {
+    if (arguments.length !== 1) {
+      return Ledis.constructReturnedObject(null, Ledis.message.WRONG_ARGUMENTS,
+        Ledis.messageType.ERROR);
+    }
+
     if (!Object.prototype.hasOwnProperty.call(this.ledisMap, key)
       || ((this.ledisMap[key] instanceof Set)
         && this.ledisMap[key].size === 0)) {
@@ -89,6 +237,11 @@ class Ledis {
   }
 
   sinter(...keys) {
+    if (arguments.length < 1) {
+      return Ledis.constructReturnedObject(null, Ledis.message.WRONG_ARGUMENTS,
+        Ledis.messageType.ERROR);
+    }
+
     for (const key of keys) {
       if (!(this.ledisMap[key] instanceof Set)
         && Object.prototype.hasOwnProperty.call(this.ledisMap, key)) {
@@ -123,7 +276,7 @@ class Ledis {
         Ledis.messageType.SUCCESS);
     }
 
-    return Ledis.constructReturnedObject(resultSet, Ledis.message.OK, Ledis.messageType.SUCCESS);
+    return Ledis.constructReturnedObject([...resultSet], Ledis.message.OK, Ledis.messageType.SUCCESS);
   }
 
   // Data expirations
@@ -139,6 +292,11 @@ class Ledis {
   }
 
   del(key) {
+    if (arguments.length !== 1) {
+      return Ledis.constructReturnedObject(null, Ledis.message.WRONG_ARGUMENTS,
+        Ledis.messageType.ERROR);
+    }
+
     if (Object.prototype.hasOwnProperty.call(this.ledisMap, key)) {
       delete this.ledisMap[key];
       return Ledis.constructReturnedObject(1, Ledis.message.OK, Ledis.messageType.SUCCESS);
@@ -147,8 +305,13 @@ class Ledis {
   }
 
   expire(key, seconds) {
-    if (seconds < 0) {
-      return Ledis.constructReturnedObject(null, Ledis.message.NEGATIVE_SECOND,
+    if (arguments.length !== 2) {
+      return Ledis.constructReturnedObject(null, Ledis.message.WRONG_ARGUMENTS,
+        Ledis.messageType.ERROR);
+    }
+
+    if (seconds < 0 || !Number.isInteger(parseInt(seconds, 10))) {
+      return Ledis.constructReturnedObject(null, Ledis.message.WRONG_FORMAT_SECOND,
         Ledis.messageType.ERROR);
     }
 
@@ -170,6 +333,11 @@ class Ledis {
   }
 
   ttl(key) {
+    if (arguments.length !== 1) {
+      return Ledis.constructReturnedObject(null, Ledis.message.WRONG_ARGUMENTS,
+        Ledis.messageType.ERROR);
+    }
+
     if (Object.prototype.hasOwnProperty.call(this.timeOutManager, key)) {
       const elapsed = Date.now() - this.timeOutManager[key].start;
       const remaining = Math.round((this.timeOutManager[key].duration - elapsed) / 1000);
@@ -229,8 +397,10 @@ Ledis.message = {
   OK: 'OK',
   WRONG_TYPE: 'Operation against a key holding the wrong kind of value',
   EMPTY_LIST_SET: 'empty list or set',
-  NEGATIVE_SECOND: 'seconds must be a positive integer',
+  WRONG_FORMAT_SECOND: 'seconds must be a positive integer',
   NO_SNAPSHOT: 'No snapshot available',
+  WRONG_ARGUMENTS: 'Wrong number of arguments',
+  WRONG_COMMAND: 'Wrong command',
 };
 
 Ledis.messageType = {

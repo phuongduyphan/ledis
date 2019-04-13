@@ -1,11 +1,28 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title><%= title %></title>
-    <link rel='stylesheet' href='/stylesheets/style.css' />
-  </head>
-  <body>
-    <h1><%= title %></h1>
-    <p>Welcome to <%= title %></p>
-  </body>
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Ledis</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/stylesheets/main.css">
+</head>
+
+<body>
+  <div class="terminal">
+    <div id="cli-panel">
+      <div class="code-line">Welcome to Ledis!</div>
+    </div>
+
+    <div class="user-panel">
+      <label for="user-input">>Ledis:</label>
+      <input type="text" id="user-input" autofocus="autofocus">
+    </div>
+  </div>
+
+  <script src="/javascripts/ledis.js"></script>
+  <script src="/javascripts/main.js"></script>
+</body>
+
 </html>
