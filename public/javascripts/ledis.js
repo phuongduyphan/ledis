@@ -220,7 +220,8 @@ class Ledis {
           countRemoveElements = this.ledisMap[key].delete(value)
             ? countRemoveElements += 1 : countRemoveElements;
         });
-        return Ledis.constructReponse(countRemoveElements, Ledis.message.OK);
+        return Ledis.constructReponse(countRemoveElements, Ledis.message.OK,
+          Ledis.messageType.SUCCESS);
       }
 
       return Ledis.constructReponse(null, Ledis.message.WRONG_TYPE, Ledis.messageType.ERROR);
@@ -296,6 +297,10 @@ class Ledis {
 
   // Data expirations
   keys() {
+    if (arguments.length !== 0) {
+      return Ledis.constructReponse(null, Ledis.message.WRONG_ARGUMENTS,
+        Ledis.messageType.ERROR);
+    }
     const keyArr = Object.keys(this.ledisMap);
 
     if (keyArr.length === 0) {
@@ -376,6 +381,11 @@ class Ledis {
   }
 
   save() {
+    if (arguments.length !== 0) {
+      return Ledis.constructReponse(null, Ledis.message.WRONG_ARGUMENTS,
+        Ledis.messageType.ERROR);
+    }
+
     const snapshots = JSON.parse(localStorage.getItem('snapshots')) || [];
 
     const id = `snapshots-${Date.now()}`;
@@ -394,6 +404,11 @@ class Ledis {
   }
 
   restore() {
+    if (arguments.length !== 0) {
+      return Ledis.constructReponse(null, Ledis.message.WRONG_ARGUMENTS,
+        Ledis.messageType.ERROR);
+    }
+
     const snapshots = JSON.parse(localStorage.getItem('snapshots')) || [];
 
     if (snapshots.length === 0) {
