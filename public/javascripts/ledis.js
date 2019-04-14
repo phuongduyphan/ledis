@@ -4,7 +4,7 @@ class Ledis {
     this.timeOutManager = {};
   }
 
-  static constructReturnedObject(value, message, messageType) {
+  static constructReponse(value, message, messageType) {
     return {
       value,
       message,
@@ -33,7 +33,7 @@ class Ledis {
     switch (command) {
       case 'set':
         if (args.length !== 2) {
-          response = Ledis.constructReturnedObject(null, Ledis.message.WRONG_ARGUMENTS,
+          response = Ledis.constructReponse(null, Ledis.message.WRONG_ARGUMENTS,
             Ledis.messageType.ERROR);
           break;
         }
@@ -42,7 +42,7 @@ class Ledis {
 
       case 'get':
         if (args.length !== 1) {
-          response = Ledis.constructReturnedObject(null, Ledis.message.WRONG_ARGUMENTS,
+          response = Ledis.constructReponse(null, Ledis.message.WRONG_ARGUMENTS,
             Ledis.messageType.ERROR);
           break;
         }
@@ -51,7 +51,7 @@ class Ledis {
 
       case 'sadd':
         if (args.length < 2) {
-          response = Ledis.constructReturnedObject(null, Ledis.message.WRONG_ARGUMENTS,
+          response = Ledis.constructReponse(null, Ledis.message.WRONG_ARGUMENTS,
             Ledis.messageType.ERROR);
           break;
         }
@@ -60,7 +60,7 @@ class Ledis {
 
       case 'srem':
         if (args.length < 2) {
-          response = Ledis.constructReturnedObject(null, Ledis.message.WRONG_ARGUMENTS,
+          response = Ledis.constructReponse(null, Ledis.message.WRONG_ARGUMENTS,
             Ledis.messageType.ERROR);
           break;
         }
@@ -69,7 +69,7 @@ class Ledis {
 
       case 'smembers':
         if (args.length !== 1) {
-          response = Ledis.constructReturnedObject(null, Ledis.message.WRONG_ARGUMENTS,
+          response = Ledis.constructReponse(null, Ledis.message.WRONG_ARGUMENTS,
             Ledis.messageType.ERROR);
           break;
         }
@@ -78,7 +78,7 @@ class Ledis {
 
       case 'sinter':
         if (args.length < 1) {
-          response = Ledis.constructReturnedObject(null, Ledis.message.WRONG_ARGUMENTS,
+          response = Ledis.constructReponse(null, Ledis.message.WRONG_ARGUMENTS,
             Ledis.messageType.ERROR);
           break;
         }
@@ -86,12 +86,17 @@ class Ledis {
         break;
 
       case 'keys':
+        if (args.length !== 0) {
+          response = Ledis.constructReponse(null, Ledis.message.WRONG_ARGUMENTS,
+            Ledis.messageType.ERROR);
+          break;
+        }
         response = this.keys();
         break;
 
       case 'del':
         if (args.length !== 1) {
-          response = Ledis.constructReturnedObject(null, Ledis.message.WRONG_ARGUMENTS,
+          response = Ledis.constructReponse(null, Ledis.message.WRONG_ARGUMENTS,
             Ledis.messageType.ERROR);
           break;
         }
@@ -100,7 +105,7 @@ class Ledis {
 
       case 'expire':
         if (args.length !== 2) {
-          response = Ledis.constructReturnedObject(null, Ledis.message.WRONG_ARGUMENTS,
+          response = Ledis.constructReponse(null, Ledis.message.WRONG_ARGUMENTS,
             Ledis.messageType.ERROR);
           break;
         }
@@ -109,7 +114,7 @@ class Ledis {
 
       case 'ttl':
         if (args.length !== 1) {
-          response = Ledis.constructReturnedObject(null, Ledis.message.WRONG_ARGUMENTS,
+          response = Ledis.constructReponse(null, Ledis.message.WRONG_ARGUMENTS,
             Ledis.messageType.ERROR);
           break;
         }
@@ -117,15 +122,25 @@ class Ledis {
         break;
 
       case 'save':
+        if (args.length !== 0) {
+          response = Ledis.constructReponse(null, Ledis.message.WRONG_ARGUMENTS,
+            Ledis.messageType.ERROR);
+          break;
+        }
         response = this.save();
         break;
 
       case 'restore':
+        if (args.length !== 0) {
+          response = Ledis.constructReponse(null, Ledis.message.WRONG_ARGUMENTS,
+            Ledis.messageType.ERROR);
+          break;
+        }
         response = this.restore();
         break;
 
       default:
-        response = Ledis.constructReturnedObject(null, Ledis.message.WRONG_COMMAND,
+        response = Ledis.constructReponse(null, Ledis.message.WRONG_COMMAND,
           Ledis.messageType.ERROR);
     }
     return response;
@@ -134,40 +149,40 @@ class Ledis {
   // String
   set(key, value) {
     if (arguments.length !== 2) {
-      return Ledis.constructReturnedObject(null, Ledis.message.WRONG_ARGUMENTS,
+      return Ledis.constructReponse(null, Ledis.message.WRONG_ARGUMENTS,
         Ledis.messageType.ERROR);
     }
 
     if (!Object.prototype.hasOwnProperty.call(this.ledisMap, key)
       || typeof this.ledisMap[key] === 'string') {
       this.ledisMap[key] = value;
-      return Ledis.constructReturnedObject(null, Ledis.message.OK, Ledis.messageType.SUCCESS);
+      return Ledis.constructReponse(null, Ledis.message.OK, Ledis.messageType.SUCCESS);
     }
 
-    return Ledis.constructReturnedObject(null, Ledis.message.WRONG_TYPE, Ledis.messageType.ERROR);
+    return Ledis.constructReponse(null, Ledis.message.WRONG_TYPE, Ledis.messageType.ERROR);
   }
 
   get(key) {
     if (arguments.length !== 1) {
-      return Ledis.constructReturnedObject(null, Ledis.message.WRONG_ARGUMENTS,
+      return Ledis.constructReponse(null, Ledis.message.WRONG_ARGUMENTS,
         Ledis.messageType.ERROR);
     }
 
     if (Object.prototype.hasOwnProperty.call(this.ledisMap, key)) {
       if (typeof this.ledisMap[key] === 'string') {
-        return Ledis.constructReturnedObject(this.ledisMap[key],
+        return Ledis.constructReponse(this.ledisMap[key],
           Ledis.message.OK, Ledis.messageType.SUCCESS);
       }
-      return Ledis.constructReturnedObject(null, Ledis.message.WRONG_TYPE,
+      return Ledis.constructReponse(null, Ledis.message.WRONG_TYPE,
         Ledis.messageType.ERROR);
     }
-    return Ledis.constructReturnedObject('nil', Ledis.message.OK, Ledis.messageType.SUCCESS);
+    return Ledis.constructReponse('nil', Ledis.message.OK, Ledis.messageType.SUCCESS);
   }
 
   // Set
   sadd(key, ...values) {
     if (arguments.length < 2) {
-      return Ledis.constructReturnedObject(null, Ledis.message.WRONG_ARGUMENTS,
+      return Ledis.constructReponse(null, Ledis.message.WRONG_ARGUMENTS,
         Ledis.messageType.ERROR);
     }
 
@@ -185,16 +200,16 @@ class Ledis {
 
       this.ledisMap[key] = set;
 
-      return Ledis.constructReturnedObject(countAddedElement, Ledis.message.OK,
+      return Ledis.constructReponse(countAddedElement, Ledis.message.OK,
         Ledis.messageType.SUCCESS);
     }
 
-    return Ledis.constructReturnedObject(null, Ledis.message.WRONG_TYPE, Ledis.messageType.ERROR);
+    return Ledis.constructReponse(null, Ledis.message.WRONG_TYPE, Ledis.messageType.ERROR);
   }
 
   srem(key, ...values) {
     if (arguments.length < 2) {
-      return Ledis.constructReturnedObject(null, Ledis.message.WRONG_ARGUMENTS,
+      return Ledis.constructReponse(null, Ledis.message.WRONG_ARGUMENTS,
         Ledis.messageType.ERROR);
     }
 
@@ -205,25 +220,25 @@ class Ledis {
           countRemoveElements = this.ledisMap[key].delete(value)
             ? countRemoveElements += 1 : countRemoveElements;
         });
-        return Ledis.constructReturnedObject(countRemoveElements, Ledis.message.OK);
+        return Ledis.constructReponse(countRemoveElements, Ledis.message.OK);
       }
 
-      return Ledis.constructReturnedObject(null, Ledis.message.WRONG_TYPE, Ledis.messageType.ERROR);
+      return Ledis.constructReponse(null, Ledis.message.WRONG_TYPE, Ledis.messageType.ERROR);
     }
 
-    return Ledis.constructReturnedObject(0, Ledis.message.OK, Ledis.messageType.SUCCESS);
+    return Ledis.constructReponse(0, Ledis.message.OK, Ledis.messageType.SUCCESS);
   }
 
   smembers(key) {
     if (arguments.length !== 1) {
-      return Ledis.constructReturnedObject(null, Ledis.message.WRONG_ARGUMENTS,
+      return Ledis.constructReponse(null, Ledis.message.WRONG_ARGUMENTS,
         Ledis.messageType.ERROR);
     }
 
     if (!Object.prototype.hasOwnProperty.call(this.ledisMap, key)
       || ((this.ledisMap[key] instanceof Set)
         && this.ledisMap[key].size === 0)) {
-      return Ledis.constructReturnedObject(null, Ledis.message.EMPTY_LIST_SET,
+      return Ledis.constructReponse(null, Ledis.message.EMPTY_LIST_SET,
         Ledis.messageType.SUCCESS);
     }
     if (this.ledisMap[key] instanceof Set) {
@@ -231,28 +246,28 @@ class Ledis {
       this.ledisMap[key].forEach((value) => {
         members.push(value);
       });
-      return Ledis.constructReturnedObject(members, Ledis.message.OK, Ledis.messageType.SUCCESS);
+      return Ledis.constructReponse(members, Ledis.message.OK, Ledis.messageType.SUCCESS);
     }
-    return Ledis.constructReturnedObject(null, Ledis.message.WRONG_TYPE, Ledis.messageType.ERROR);
+    return Ledis.constructReponse(null, Ledis.message.WRONG_TYPE, Ledis.messageType.ERROR);
   }
 
   sinter(...keys) {
     if (arguments.length < 1) {
-      return Ledis.constructReturnedObject(null, Ledis.message.WRONG_ARGUMENTS,
+      return Ledis.constructReponse(null, Ledis.message.WRONG_ARGUMENTS,
         Ledis.messageType.ERROR);
     }
 
     for (const key of keys) {
       if (!(this.ledisMap[key] instanceof Set)
         && Object.prototype.hasOwnProperty.call(this.ledisMap, key)) {
-        return Ledis.constructReturnedObject(null, Ledis.message.WRONG_TYPE,
+        return Ledis.constructReponse(null, Ledis.message.WRONG_TYPE,
           Ledis.messageType.ERROR);
       }
     }
 
     for (const key of keys) {
       if (!Object.prototype.hasOwnProperty.call(this.ledisMap, key)) {
-        return Ledis.constructReturnedObject(null, Ledis.message.EMPTY_LIST_SET,
+        return Ledis.constructReponse(null, Ledis.message.EMPTY_LIST_SET,
           Ledis.messageType.SUCCESS);
       }
     }
@@ -272,11 +287,11 @@ class Ledis {
     ), this.ledisMap[keys[0]]);
 
     if (resultSet.size === 0) {
-      return Ledis.constructReturnedObject(null, Ledis.message.EMPTY_LIST_SET,
+      return Ledis.constructReponse(null, Ledis.message.EMPTY_LIST_SET,
         Ledis.messageType.SUCCESS);
     }
 
-    return Ledis.constructReturnedObject([...resultSet], Ledis.message.OK, Ledis.messageType.SUCCESS);
+    return Ledis.constructReponse([...resultSet], Ledis.message.OK, Ledis.messageType.SUCCESS);
   }
 
   // Data expirations
@@ -284,39 +299,39 @@ class Ledis {
     const keyArr = Object.keys(this.ledisMap);
 
     if (keyArr.length === 0) {
-      return Ledis.constructReturnedObject(null, Ledis.message.EMPTY_LIST_SET,
+      return Ledis.constructReponse(null, Ledis.message.EMPTY_LIST_SET,
         Ledis.messageType.SUCCESS);
     }
 
-    return Ledis.constructReturnedObject(keyArr, Ledis.message.OK, Ledis.messageType.SUCCESS);
+    return Ledis.constructReponse(keyArr, Ledis.message.OK, Ledis.messageType.SUCCESS);
   }
 
   del(key) {
     if (arguments.length !== 1) {
-      return Ledis.constructReturnedObject(null, Ledis.message.WRONG_ARGUMENTS,
+      return Ledis.constructReponse(null, Ledis.message.WRONG_ARGUMENTS,
         Ledis.messageType.ERROR);
     }
 
     if (Object.prototype.hasOwnProperty.call(this.ledisMap, key)) {
       delete this.ledisMap[key];
-      return Ledis.constructReturnedObject(1, Ledis.message.OK, Ledis.messageType.SUCCESS);
+      return Ledis.constructReponse(1, Ledis.message.OK, Ledis.messageType.SUCCESS);
     }
-    return Ledis.constructReturnedObject(0, Ledis.message.OK, Ledis.messageType.SUCCESS);
+    return Ledis.constructReponse(0, Ledis.message.OK, Ledis.messageType.SUCCESS);
   }
 
   expire(key, seconds) {
     if (arguments.length !== 2) {
-      return Ledis.constructReturnedObject(null, Ledis.message.WRONG_ARGUMENTS,
+      return Ledis.constructReponse(null, Ledis.message.WRONG_ARGUMENTS,
         Ledis.messageType.ERROR);
     }
 
     if (seconds < 0 || !Number.isInteger(parseInt(seconds, 10))) {
-      return Ledis.constructReturnedObject(null, Ledis.message.WRONG_FORMAT_SECOND,
+      return Ledis.constructReponse(null, Ledis.message.WRONG_FORMAT_SECOND,
         Ledis.messageType.ERROR);
     }
 
     if (!Object.prototype.hasOwnProperty.call(this.ledisMap, key)) {
-      return Ledis.constructReturnedObject(0, Ledis.message.OK, Ledis.messageType.SUCCESS);
+      return Ledis.constructReponse(0, Ledis.message.OK, Ledis.messageType.SUCCESS);
     }
 
     this.timeOutManager[key] = {
@@ -329,24 +344,24 @@ class Ledis {
       delete this.timeOutManager[key];
     }, seconds * 1000);
 
-    return Ledis.constructReturnedObject(seconds, Ledis.message.OK, Ledis.messageType.SUCCESS);
+    return Ledis.constructReponse(seconds, Ledis.message.OK, Ledis.messageType.SUCCESS);
   }
 
   ttl(key) {
     if (arguments.length !== 1) {
-      return Ledis.constructReturnedObject(null, Ledis.message.WRONG_ARGUMENTS,
+      return Ledis.constructReponse(null, Ledis.message.WRONG_ARGUMENTS,
         Ledis.messageType.ERROR);
     }
 
     if (Object.prototype.hasOwnProperty.call(this.timeOutManager, key)) {
       const elapsed = Date.now() - this.timeOutManager[key].start;
       const remaining = Math.round((this.timeOutManager[key].duration - elapsed) / 1000);
-      return Ledis.constructReturnedObject(remaining, Ledis.message.OK, Ledis.messageType.SUCCESS);
+      return Ledis.constructReponse(remaining, Ledis.message.OK, Ledis.messageType.SUCCESS);
     }
     if (Object.prototype.hasOwnProperty.call(this.ledisMap, key)) {
-      return Ledis.constructReturnedObject(-1, Ledis.message.OK, Ledis.messageType.SUCCESS);
+      return Ledis.constructReponse(-1, Ledis.message.OK, Ledis.messageType.SUCCESS);
     }
-    return Ledis.constructReturnedObject(-2, Ledis.message.OK, Ledis.messageType.SUCCESS);
+    return Ledis.constructReponse(-2, Ledis.message.OK, Ledis.messageType.SUCCESS);
   }
 
   // Snapshot
@@ -367,7 +382,7 @@ class Ledis {
     snapshots.push(id);
     localStorage.setItem('snapshots', JSON.stringify(snapshots));
     localStorage.setItem(id, JSON.stringify(this.ledisMap, Ledis.setToJSONReplacer));
-    return Ledis.constructReturnedObject(null, Ledis.message.OK, Ledis.messageType.SUCCESS);
+    return Ledis.constructReponse(null, Ledis.message.OK, Ledis.messageType.SUCCESS);
   }
 
   static JSONToSetReviver(key, value) {
@@ -382,14 +397,14 @@ class Ledis {
     const snapshots = JSON.parse(localStorage.getItem('snapshots')) || [];
 
     if (snapshots.length === 0) {
-      return Ledis.constructReturnedObject(null, Ledis.message.NO_SNAPSHOT,
+      return Ledis.constructReponse(null, Ledis.message.NO_SNAPSHOT,
         Ledis.messageType.ERROR);
     }
 
     const ledisState = JSON.parse(localStorage.getItem(snapshots[snapshots.length - 1]),
       Ledis.JSONToSetReviver);
     this.ledisMap = ledisState;
-    return Ledis.constructReturnedObject(null, Ledis.message.OK, Ledis.messageType.SUCCESS);
+    return Ledis.constructReponse(null, Ledis.message.OK, Ledis.messageType.SUCCESS);
   }
 }
 
